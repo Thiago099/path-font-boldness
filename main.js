@@ -1,7 +1,7 @@
 
+import './style.css'
 import opentype from 'opentype.js';
-import earcut from 'earcut';
-
+import getNormals from 'polyline-normals';
 function distance(p1, p2) {
   const dx = p1.x - p2.x, dy = p1.y - p2.y;
   return Math.sqrt(dx * dx + dy * dy);
@@ -82,12 +82,24 @@ class Polygon {
   }
 }
 
-opentype.load("https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf", function(err, font) {
+var boldness = document.getElementById('boldness');
+var samplerInput = document.getElementById('sampler');
+var textInput = document.getElementById('text');
+textInput.addEventListener('input', onupdate);
+boldness.addEventListener('change', onupdate);
+samplerInput.addEventListener('change', onupdate);
+onupdate();
+function onupdate() {
+  var number = boldness.value;
+  var text = textInput.value;
+  var sampler = samplerInput.value;
+
+opentype.load("Roboto-Regular.ttf", function(err, font) {
   if (err) {
     alert('Font could not be loaded: ' + err);
   } else {
     // create path
-    const path = font.getPath('Hello, World!', 0, 0, 72);
+    const path = font.getPath(text, 0, 0, 72);
     // create a list of closed contours
     const polys = [];
     path.commands.forEach(({type, x, y, x1, y1, x2, y2}) => {
@@ -131,182 +143,97 @@ opentype.load("https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/ro
       }
     }
     
-    const totalPoints = polys.reduce((sum, p) => sum + p.points.length, 0);
-    const vertexData = new Float32Array(totalPoints * 2);
-    let vertexCount = 0;
-    const indices = [];
+    
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext("2d");
+    //clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    function process(poly) {
-      // construct input for earcut
-      const coords = [];
-      const holes = [];
-      poly.points.forEach(({x, y}) => coords.push(x, y));
-      poly.children.forEach(child => {
-        // children's children are new, separate shapes
-        child.children.forEach(process);
-        
-        holes.push(coords.length / 2);
-        child.points.forEach(({x, y}) => coords.push(x, y));
-      });
+    var y = 100;
+
+    function simplifyPath(points, tolerance) {
+      let simplifiedPoints = [points[0]];
+      let stack = [[0, points.length - 1]];
       
-      // add vertex data
-      vertexData.set(coords, vertexCount * 2);
-      // add index data
-      earcut(coords, holes).forEach(i => indices.push(i + vertexCount));
-      vertexCount += coords.length / 2;
-    }
-    root.forEach(process);
-    
-    const indexData = new Uint16Array(indices);
-    
-    // boring stuff
-    const canvas = document.getElementById("canvas");
-    const gl = canvas.getContext("webgl");
-    const width = canvas.width, height = canvas.height;
-    gl.viewport(0, 0, width, height);    
-    const prog = gl.createProgram();
-    const vs = gl.createShader(gl.VERTEX_SHADER);
-    gl.shaderSource(vs, `
-    uniform vec2 uScale;
-    uniform vec2 uOffset;
-    attribute vec2 position;
-    attribute vec2 normal;
-    uniform float uThickness;
-    
-    void main() {
-      gl_Position = vec4((position+normal*uThickness) * uScale + uOffset, 0.0, 1.0);
-    }
-`);
-    gl.compileShader(vs);
-    const ps = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(ps, `
-    
-    
-    precision highp float;
-    uniform vec4 uColor;
-    uniform float uThickness;
-    
-    void main() {
-      gl_FragColor = uColor;
-
-
-    }
-
-`);
-    gl.compileShader(ps);
-    gl.attachShader(prog, vs);
-    gl.attachShader(prog, ps);
-
-    gl.linkProgram(prog);
-    const [uScale, uOffset, uColor, uThickness] = ["uScale", "uOffset", "uColor", "uThickness"]
-      .map(name => gl.getUniformLocation(prog, name));
-    
-    gl.useProgram(prog);
-    gl.uniform2fv(uScale, [2.0 / width, -2.0 / height]);
-    gl.uniform2fv(uOffset, [-0.9, 0.0]);
-    gl.uniform4fv(uColor, [0.0, 0.0, 0.0, 1.0]);
-    gl.uniform1f(uThickness, 5);
-    
-    gl.clearColor(1.0, 1.0, 1.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-
-    // console.log(indexData);
-    var normals = [];
-    for (var i = 0; i < vertexData.length; i += 2) {
-
-      var prev = i - 2;
-      if (prev < 0) {
-        prev = vertexData.length - 2;
-      }
-      var next = i + 2;
-      if (next >= vertexData.length) {
-        next = 0;
-      }
-
-
-      var dx1 = vertexData[i] - vertexData[prev];
-      var dy1 = vertexData[i + 1] - vertexData[prev + 1];
-      var dx2 = vertexData[next] - vertexData[i];
-      var dy2 = vertexData[next + 1] - vertexData[i + 1];
-
-
-      var nx = dy1 + dy2;
-      var ny = -dx1 - dx2;
-      var len = Math.sqrt(nx * nx + ny * ny);
-      nx /= len;
-      ny /= len;
-      normals.push(nx, ny);
-    }
-
-    
-
-
-
-
-
-    // var normals = [];
-    // for (var i = 0; i < indexData.length; i +=3) {
-
-    //   var idx1 = indexData[i] * 2;
-    //   var idx2 = indexData[i + 1] * 2;
-    //   var idx3 = indexData[i + 2] * 2;
-
-    //   var array = [vertexData[idx1], vertexData[idx1 + 1], vertexData[idx2], vertexData[idx2 + 1], vertexData[idx3], vertexData[idx3 + 1]];
-      
-    //   for (var j = 0; j < array.length; j += 2) {
-
+      while (stack.length > 0) {
+        let range = stack.pop();
+        let maxDistance = 0;
+        let index = 0;
         
-    //     var prev = j - 2;
-    //     if (prev < 0) {
-    //       prev = array.length - 2;
-    //     }
-    //     var next = j + 2;
-    //     if (next >= array.length) {
-    //       next = 0;
-    //     }
-    //     var dx1 = array[j] - array[prev];
-    //     var dy1 = array[j + 1] - array[prev + 1];
-    //     var dx2 = array[next] - array[j];
-    //     var dy2 = array[next + 1] - array[j + 1];
-
-    //     var nx = dy1 + dy2;
-    //     var ny = -dx1 - dx2;
-
-    //     normals.push(nx, ny);
-    //   }
-
-    // }
-
-
+        for (let i = range[0] + 1; i < range[1]; i++) {
+          let distance = distanceToSegment(points[i], points[range[0]], points[range[1]]);
+          if (distance > maxDistance) {
+            maxDistance = distance;
+            index = i;
+          }
+        }
+        
+        if (maxDistance > tolerance) {
+          stack.push([range[0], index]);
+          stack.push([index, range[1]]);
+        } else {
+          simplifiedPoints.push(points[range[1]]);
+        }
+      }
+      
+      return simplifiedPoints;
+    }
     
-
-    console.log(normals);
-
-    
-    const normalAttributeLocation = gl.getAttribLocation(prog, 'normal');
-    const normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(normalAttributeLocation, 2, gl.FLOAT, true, 8, 0);
-    gl.enableVertexAttribArray(normalAttributeLocation);
-    const positionAttributeLocation = gl.getAttribLocation(prog, 'position');
-    const vertBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, true, 8, 0);
-    gl.enableVertexAttribArray(positionAttributeLocation);
+    function distanceToSegment(point, start, end) {
+      let dx = end[0] - start[0];
+      let dy = end[1] - start[1];
+      let t = ((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / (dx * dx + dy * dy);
+      t = Math.max(0, Math.min(1, t));
+      let x = start[0] + t * dx;
+      let y = start[1] + t * dy;
+      return Math.hypot(point[0] - x, point[1] - y);
+    }
 
 
-    const indxBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indxBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexData, gl.STATIC_DRAW);
-    
+    function draw(points,hull)
+    {
 
-    
-    //poligon mode
-    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+      var duplicated = new Set()
+      var new_points = []
+      for(var i = 0;i<points.length;i++){
+        var key = Math.floor(points[i].x/sampler) + "," + Math.floor(points[i].y/sampler)
+        if(!duplicated.has(key)){
+          new_points.push(points[i])
+          duplicated.add(key)
+        }
+      }
+      var input = new_points.map(x=>[x.x,x.y])
 
-    gl.flush();
+      const n = getNormals(input,true)
+
+      points = input.map(x=>{return {x:x[0],y:x[1]}})
+
+      var [[nx,ny],miter] = n[0]
+      points[0].x -= nx * number
+      points[0].y -= ny * number
+      var fist = points[0]
+      
+      ctx.beginPath()
+      ctx.moveTo(fist.x,fist.y+y)
+      for(var i = 1;i<points.length;i++){
+        const [[nx,ny],miter] = n[i]
+        var p = points[i]
+        ctx.lineTo(p.x-nx*number,p.y+y-ny*number)
+      }
+      ctx.lineTo(fist.x,fist.y+y)
+      ctx.closePath()
+      ctx.fill()
+    }
+    for(var item of root)
+    {
+      ctx.globalCompositeOperation = 'source-over';
+      draw(item.points,false)
+      ctx.globalCompositeOperation = 'destination-out';
+      for(var child of item.children)
+      {
+        draw(child.points,true)
+      }
+    }
   }
-});
+})
+}

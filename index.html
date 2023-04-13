@@ -7,7 +7,21 @@
     <title>Vite App</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div class="row">
+      <div class="col">
+        <label>boldness</label>
+        <input type="number" value="0" id="boldness">
+      </div>
+      <div class="col">
+        <label for="col">sampler</label>
+        <input type="number" value="2" id="sampler">
+      </div>
+      <div class="col">
+        <label for="col">text</label>
+        <input type="text" value="hello world" id="text">
+      </div>
+
+    </div>
     <canvas id="canvas" width="500px"></canvas>
     <script type="module" src="/main.js"></script>
   </body>
