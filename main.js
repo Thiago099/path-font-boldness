@@ -170,10 +170,11 @@ opentype.load("https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/ro
     uniform vec2 uScale;
     uniform vec2 uOffset;
     attribute vec2 position;
+    attribute vec2 normal;
     uniform float uThickness;
     
     void main() {
-      gl_Position = vec4(position * uScale + uOffset, 0.0, 1.0);
+      gl_Position = vec4((position+normal*uThickness) * uScale + uOffset, 0.0, 1.0);
     }
 `);
     gl.compileShader(vs);
@@ -204,23 +205,80 @@ opentype.load("https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/ro
     gl.uniform2fv(uScale, [2.0 / width, -2.0 / height]);
     gl.uniform2fv(uOffset, [-0.9, 0.0]);
     gl.uniform4fv(uColor, [0.0, 0.0, 0.0, 1.0]);
-    gl.uniform1f(uThickness, 20);
+    gl.uniform1f(uThickness, 5);
     
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    var normals = [];
-    for (var i = 0; i < vertexData.length; i += 2) {
-      var x = vertexData[i];
-      var y = vertexData[i + 1];
-      var nextX = vertexData[(i + 2) % vertexData.length];
-      var nextY = vertexData[(i + 3) % vertexData.length];
-      var dx = nextX - x;
-      var dy = nextY - y;
-      var len = Math.sqrt(dx * dx + dy * dy);
-      normals.push(-dy / len, dx / len);
-    }
+
+    // console.log(indexData);
+    // var normals = [];
+    // for (var i = 0; i < vertexData.length; i += 2) {
+
+    //   var prev = i - 2;
+    //   if (prev < 0) {
+    //     prev = vertexData.length - 2;
+    //   }
+    //   var next = i + 2;
+    //   if (next >= vertexData.length) {
+    //     next = 0;
+    //   }
+
+
+    //   var dx1 = vertexData[i] - vertexData[prev];
+    //   var dy1 = vertexData[i + 1] - vertexData[prev + 1];
+    //   var dx2 = vertexData[next] - vertexData[i];
+    //   var dy2 = vertexData[next + 1] - vertexData[i + 1];
+
+
+    //   var nx = dy1 + dy2;
+    //   var ny = -dx1 - dx2;
+    //   var len = Math.sqrt(nx * nx + ny * ny);
+    //   nx /= len;
+    //   ny /= len;
+    //   normals.push(nx, ny);
+    // }
+
     
+
+
+
+
+
+    var normals = [];
+    // for (var i = 0; i < indexData.length; i +=3) {
+
+    //   var idx1 = indexData[i] * 2;
+    //   var idx2 = indexData[i + 1] * 2;
+    //   var idx3 = indexData[i + 2] * 2;
+
+    //   var array = [vertexData[idx1], vertexData[idx1 + 1], vertexData[idx2], vertexData[idx2 + 1], vertexData[idx3], vertexData[idx3 + 1]];
+      
+    //   for (var j = 0; j < array.length; j += 2) {
+
+        
+    //     var prev = j - 2;
+    //     if (prev < 0) {
+    //       prev = array.length - 2;
+    //     }
+    //     var next = j + 2;
+    //     if (next >= array.length) {
+    //       next = 0;
+    //     }
+    //     var dx1 = array[j] - array[prev];
+    //     var dy1 = array[j + 1] - array[prev + 1];
+    //     var dx2 = array[next] - array[j];
+    //     var dy2 = array[next + 1] - array[j + 1];
+
+    //     var nx = dy1 + dy2;
+    //     var ny = -dx1 - dx2;
+
+    //     normals.push(nx, ny);
+    //   }
+
+    // }
+
+
     
 
     console.log(normals);
