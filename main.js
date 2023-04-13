@@ -212,32 +212,32 @@ opentype.load("https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/ro
 
 
     // console.log(indexData);
-    // var normals = [];
-    // for (var i = 0; i < vertexData.length; i += 2) {
+    var normals = [];
+    for (var i = 0; i < vertexData.length; i += 2) {
 
-    //   var prev = i - 2;
-    //   if (prev < 0) {
-    //     prev = vertexData.length - 2;
-    //   }
-    //   var next = i + 2;
-    //   if (next >= vertexData.length) {
-    //     next = 0;
-    //   }
-
-
-    //   var dx1 = vertexData[i] - vertexData[prev];
-    //   var dy1 = vertexData[i + 1] - vertexData[prev + 1];
-    //   var dx2 = vertexData[next] - vertexData[i];
-    //   var dy2 = vertexData[next + 1] - vertexData[i + 1];
+      var prev = i - 2;
+      if (prev < 0) {
+        prev = vertexData.length - 2;
+      }
+      var next = i + 2;
+      if (next >= vertexData.length) {
+        next = 0;
+      }
 
 
-    //   var nx = dy1 + dy2;
-    //   var ny = -dx1 - dx2;
-    //   var len = Math.sqrt(nx * nx + ny * ny);
-    //   nx /= len;
-    //   ny /= len;
-    //   normals.push(nx, ny);
-    // }
+      var dx1 = vertexData[i] - vertexData[prev];
+      var dy1 = vertexData[i + 1] - vertexData[prev + 1];
+      var dx2 = vertexData[next] - vertexData[i];
+      var dy2 = vertexData[next + 1] - vertexData[i + 1];
+
+
+      var nx = dy1 + dy2;
+      var ny = -dx1 - dx2;
+      var len = Math.sqrt(nx * nx + ny * ny);
+      nx /= len;
+      ny /= len;
+      normals.push(nx, ny);
+    }
 
     
 
@@ -245,7 +245,7 @@ opentype.load("https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/ro
 
 
 
-    var normals = [];
+    // var normals = [];
     // for (var i = 0; i < indexData.length; i +=3) {
 
     //   var idx1 = indexData[i] * 2;
