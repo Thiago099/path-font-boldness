@@ -173,9 +173,7 @@ opentype.load("https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/ro
     uniform float uThickness;
     
     void main() {
-      gl_Position = vec4(position*1.1 * uScale + uOffset, 0.0, 1.0);
-
-
+      gl_Position = vec4(position * uScale + uOffset, 0.0, 1.0);
     }
 `);
     gl.compileShader(vs);
@@ -206,7 +204,7 @@ opentype.load("https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/ro
     gl.uniform2fv(uScale, [2.0 / width, -2.0 / height]);
     gl.uniform2fv(uOffset, [-0.9, 0.0]);
     gl.uniform4fv(uColor, [0.0, 0.0, 0.0, 1.0]);
-    gl.uniform1f(uThickness, 1);
+    gl.uniform1f(uThickness, 20);
     
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
