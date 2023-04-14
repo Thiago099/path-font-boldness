@@ -16,7 +16,7 @@ function cross(p1, p2) {
 }
 
 // bezier discretization
-const MAX_BEZIER_STEPS = 10;
+const MAX_BEZIER_STEPS = 3;
 const BEZIER_STEP_SIZE = 3.0;
 // this is for inside checks - doesn't have to be particularly
 // small because glyphs have finite resolution
